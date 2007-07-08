@@ -2,7 +2,7 @@
 %define plugin	tvonscreen
 %define name	vdr-plugin-%plugin
 %define version	1.0.141
-%define rel	5
+%define rel	6
 
 Summary:	VDR plugin: Shows the EPG info in form of a typical TV magazine
 Name:		%name
