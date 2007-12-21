@@ -14,6 +14,7 @@ URL:		http://www.js-home.org/vdr/tvonscreen/
 Source:		vdr-%plugin-%version.tar.bz2
 # from e-tobi repo:
 Patch0:		02_tvonscreen-1.0-fixes.dpatch
+BuildRoot:	%{_tmppath}/%{name}-buildroot
 BuildRequires:	vdr-devel >= 1.4.1-6
 Requires:	vdr-abi = %vdr_abi
 
