@@ -2,7 +2,7 @@
 %define plugin	tvonscreen
 %define name	vdr-plugin-%plugin
 %define version	1.0.141
-%define rel	8
+%define rel	9
 
 Summary:	VDR plugin: Shows the EPG info in form of a typical TV magazine
 Name:		%name
@@ -12,10 +12,12 @@ Group:		Video
 License:	GPL
 URL:		http://www.js-home.org/vdr/tvonscreen/
 Source:		vdr-%plugin-%version.tar.bz2
-# from e-tobi repo:
+# dpatches from e-tobi repo
 Patch0:		02_tvonscreen-1.0-fixes.dpatch
+Patch1:		90_tvonscreen-1.0.141-1.5.3.dpatch
+Patch2:		tvonscreen-1.0.141-i18n-1.6.patch
 BuildRoot:	%{_tmppath}/%{name}-buildroot
-BuildRequires:	vdr-devel >= 1.4.1-6
+BuildRequires:	vdr-devel >= 1.6.0
 Requires:	vdr-abi = %vdr_abi
 
 %description
@@ -28,6 +30,9 @@ show details, search for events and add vdradmin auto timers.
 %prep
 %setup -q -n %plugin-%version
 %patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%vdr_plugin_prep
 
 %vdr_plugin_params_begin %plugin
 # optional path for the XPM channel logos
