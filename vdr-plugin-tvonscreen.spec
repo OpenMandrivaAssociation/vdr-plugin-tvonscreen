@@ -42,7 +42,7 @@ default=%{_vdr_chanlogodir}
 # path and filename to vdradmin at file
 var=VDRADMIN_TIMERFILE
 param="-v VDRADMIN_TIMERFILE"
-default=%{_localstatedir}/vdradmin/vdradmin.at
+default=%{_localstatedir}/lib/vdradmin/vdradmin.at
 %vdr_plugin_params_end
 
 %build
