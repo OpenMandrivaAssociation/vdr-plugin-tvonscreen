@@ -4,6 +4,9 @@
 %define version	1.0.141
 %define rel	10
 
+# backportability
+%define _localstatedir %{_var}
+
 Summary:	VDR plugin: Shows the EPG info in form of a typical TV magazine
 Name:		%name
 Version:	%version
