@@ -2,7 +2,7 @@
 %define plugin	tvonscreen
 %define name	vdr-plugin-%plugin
 %define version	1.0.141
-%define rel	10
+%define rel	11
 
 # backportability
 %define _localstatedir %{_var}
