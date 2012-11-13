@@ -1,0 +1,2093 @@
+
+This is a semi-automatically created i18n adaptation patch and may contain
+errors (such as missing translations). This should only be used as a
+temporary measure until the upstream plugin maintainer fixes the plugin
+properly according to the instructions in i18n-to-gettext.pl.
+
+Created for Mandriva Linux packaging by Anssi Hannula <anssi@mandriva.org>.
+
+
+Index: tvonscreen-1.0.141/Makefile
+===================================================================
+--- tvonscreen-1.0.141/Makefile
++++ tvonscreen-1.0.141/Makefile	2008-04-25 12:12:16.000000000 +0300
+@@ -50,7 +50,7 @@
+ 
+ ### The object files (add further files here):
+ 
+-OBJS = $(PLUGIN).o i18n.o magazine.o anyfont.o config.o gfxtools.o timer.o search.o
++OBJS = $(PLUGIN).o  magazine.o anyfont.o config.o gfxtools.o timer.o search.o
+ 
+ ### Implicit rules:
+ 
+@@ -66,9 +66,34 @@
+ 
+ -include $(DEPFILE)
+ 
++### Internationalization (I18N):
++
++PODIR     = po
++LOCALEDIR = $(VDRDIR)/locale
++I18Npo    = $(wildcard $(PODIR)/*.po)
++I18Nmsgs  = $(addprefix $(LOCALEDIR)/, $(addsuffix /LC_MESSAGES/vdr-$(PLUGIN).mo, $(notdir $(foreach file, $(I18Npo), $(basename $(file))))))
++I18Npot   = $(PODIR)/$(PLUGIN).pot
++
++%.mo: %.po
++	msgfmt -c -o $@ $<
++
++$(I18Npot): $(wildcard *.[ch] *.[ch]xx *.cc *.[ch]pp *.hh)
++	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --msgid-bugs-address='<http://qa.mandriva.com/>' -o $@ $^
++
++%.po: $(I18Npot)
++	msgmerge -U --no-wrap --no-location --backup=none -q $@ $<
++	@touch $@
++
++$(I18Nmsgs): $(LOCALEDIR)/%/LC_MESSAGES/vdr-$(PLUGIN).mo: $(PODIR)/%.mo
++	@mkdir -p $(dir $@)
++	cp $< $@
++
++.PHONY: i18n
++i18n: $(I18Nmsgs)
++
+ ### Targets:
+ 
+-all: libvdr-$(PLUGIN).so
++all: libvdr-$(PLUGIN).so i18n
+ 
+ libvdr-$(PLUGIN).so: $(OBJS)
+ 	$(CXX) $(CXXFLAGS) -shared $(OBJS) -o $@
+@@ -84,4 +109,5 @@
+ 	@echo Distribution package created as $(PACKAGE).tgz
+ 
+ clean:
++	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+ 	@-rm -f $(OBJS) $(DEPFILE) *.so *.tar.gz core* *~
+Index: tvonscreen-1.0.141/i18n.c
+===================================================================
+--- tvonscreen-1.0.141/i18n.c
++++ tvonscreen-1.0.141/i18n.c	2008-04-25 12:12:16.000000000 +0300
+@@ -1,1271 +0,0 @@
+-/*
+- * i18n.c: Internationalization
+- *
+- * See the README file for copyright information and how to reach the author.
+- *
+- * $Id: i18n.c,v 1.15 2004/11/30 20:08:24 schmitzj Exp $
+- *
+- */
+-
+-#include "i18n.h"
+-
+-const tI18nPhrase tvoPhrases[] = {
+-  { "TV-OnScreen", // English
+-    "TV-OnScreen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "TV-ohjelmat", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Shows the EPG info in form of a typical TV magazine", // English
+-    "", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "TV-ohjelmatiedot (OSD)", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "o'clock", // English
+-    "Uhr", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    " ", // suomi (empty space)
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "%d-%m", // English
+-    "%d.%m.", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "%d.%m.", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Press 1 for help", // English
+-    "Für Hilfe die 1 drücken", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Paina '1' nähdäksesi opasteen", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Timer conflict!", // English
+-    "Timer Konflikt!", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    " ", // suomi (empty space)
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-
+-// Prefs
+-  { "show channel logos", // English
+-    "zeige Kanal-Logos", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Näytä kanavien logot", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "use XL fonts", // English
+-    "benutze XL Schrift", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Käytä XL-kirjasinta", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "hide info line", // English
+-    "verstecke Info Zeile", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Piilota inforivi", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "show channel names", // English
+-    "zeige Kanal-Namen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Näytä kanavien nimet", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "show logos in black&white", // English
+-    "zeige Kanal-Logos in Schwarz/Weiß", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Näytä logot mustavalkoisina", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "enable color problem work around", // English
+-    "Farbproblem Umgehung aktivieren", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Saksalainen värikorjaus", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "user point in time 1 (Key 4)", // English
+-    "Anwenderzeitpunkt 1 (Taste 4)", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Ajankohta #1 (näppäin '4')", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "user point in time 2 (Key 5)", // English
+-    "Anwenderzeitpunkt 2 (Taste 5)", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Ajankohta #2 (näppäin '5')", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "user point in time 3 (Key 6)", // English
+-    "Anwenderzeitpunkt 3 (Taste 6)", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Ajankohta #3 (näppäin '6')", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "jump to next day point if ago", // English
+-    "Gehe zum nächsten Tag wenn vorbei", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Siirry tarvittaessa seur. päivään", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Show search item itself", // English
+-    "Zeige auch Suchbegriff", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Näytä hakuehto", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-
+-// Help
+-  { "NORMAL MODE:", // English
+-    "NORMALER MODUS:", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "NORMAALITILA:\n", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "arrows\n\tmove view", // English
+-    "Pfeile\n\tAnsicht bewegen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Nuolinäppäimet'\n\tohjaa näkymää", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "back\n\tclose TV OnScreen", // English
+-    "back\n\tschließe TV OnScreen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Takaisin'\n\tsulje laajennos", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "red/blue\n\t-/+ one day", // English
+-    "rot/blau\n\t-/+ ein Tag", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Punainen'/'Sininen'\n\tyksi päivä eteen/taaksepäin", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "green/yellow\n\tone page left/right", // English
+-    "grün/gelb\n\teine Seite links/rechts", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Vihreä'/'Keltainen'\n\tseuraava/edellinen sivu", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "7/9\n\tone page left/right", // English
+-    "7/9\n\teine Seite links/rechts", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'7'/'9'\n\tseuraava/edellinen sivu", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "8\n\tgoto current channel", // English
+-    "8\n\tgehe zum aktuellen Kanal", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'8'\n\tsiirry nykyiselle kanavalle", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "0\n\tgoto now", // English
+-    "0\n\tgehe zur aktuellen Zeit", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'0'\n\tsiirry nykyhetkeen", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "4/5/6\n\tgoto configured time", // English
+-    "4/5/6\n\tgehe zu eingestellten Zeitpunkten", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'4'/'5'/'6'\n\tsiirry määriteltyyn ajankohtaan", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "ok\n\tswitch to edit mode\n", // English
+-    "ok\n\taktiviere Editier-Modus\n", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'OK'\n\tvaihda muokkaustilaan\n", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "EDIT MODE:", // English
+-    "EDITIER MODUS:", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "MUOKKAUSTILA:\n", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "back\n\tback to normal mode", // English
+-    "back\n\tzurück zum normalen Modus", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Takaisin'\n\tvaihda normaalitilaan", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "arrows\n\tmove selected schedule", // English
+-    "Pfeile\n\tSendung auswählen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Nuolinäppäimet'\n\tvalitse ohjelma", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "record\n\tcreate timer", // English
+-    "record\n\terzeuge Timer", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'Tallenna'\n\tluo ajastin", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "ok\n\tshow details", // English
+-    "ok\n\tzeige Sendungsdetails", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "'OK'\n\tnäytä lisätiedot", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-// End Help
+-
+-// Details
+-  { "Record", // English
+-    "Aufnehmen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Tallenna", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Search", // English
+-    "Suchen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Etsi", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "AutoTimer", // English
+-    "AutoTimer", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "AutoTimer", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Added AutoTimer to vdradmin.", // English
+-    "AutoTimer in vdradmin aufgenommen.", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "AutoTimer lisätty VDRAdminiin.", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Startoption 'vdradminfile' not set!", // English
+-    "Startoption 'vdradminfile' nicht gesetzt!", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Käynnistysoptio 'vdradminfile' puuttuu!", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-
+-// Search
+-  { "Search for", // English
+-    "Suche nach", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Etsitään termiä", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Searching...", // English
+-    "Suchen...", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Etsitään...", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Nothing found!", // English
+-    "Nichts gefunden!", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "", // suomi
+-    "Ei löydetty!", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Back", // English
+-    "Zurück", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Takaisin", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "Details", // English
+-    "Details", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Lisätiedot", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-  { "in all", // English
+-    "in allen", // Deutsch
+-    "", // Slovenski
+-    "", // Italiano
+-    "", // Nederlands
+-    "", // Português
+-    "", // Français
+-    "", // Norsk
+-    "Etsi kaikki", // suomi
+-    "", // Polski
+-    "", // Español
+-    "", // ÅëëçíéêÜ
+-    "", // Svenska
+-    "", // Romaneste
+-    "", // Magyar
+-    "", // Català
+-#if VDRVERSNUM >= 10302
+-    ""  // ÀãááÚØÙ (Russian)
+-#if VDRVERSNUM >= 10307
+-    "", // Hrvatski (Croatian)
+-#if VDRVERSNUM >= 10313
+-    "", // Eesti
+-#if VDRVERSNUM >= 10316
+-    "", // Dansk
+-#endif
+-#endif
+-#endif
+-#endif
+-  },
+-
+-  { NULL }
+-  };
+Index: tvonscreen-1.0.141/i18n.h
+===================================================================
+--- tvonscreen-1.0.141/i18n.h
++++ tvonscreen-1.0.141/i18n.h	2008-04-25 12:12:16.000000000 +0300
+@@ -1,18 +0,0 @@
+-/*
+- * i18n.h: Internationalization
+- *
+- * See the README file for copyright information and how to reach the author.
+- *
+- * $Id: i18n.h,v 1.2 2004/11/23 21:42:55 schmitzj Exp $
+- *
+- */
+-
+-#ifndef _I18N__H
+-#define _I18N__H
+-
+-#include <vdr/i18n.h>
+-#include <vdr/config.h> // for VDRVERSNUM define only
+-
+-extern const tI18nPhrase tvoPhrases[];
+-
+-#endif //_I18N__H
+Index: tvonscreen-1.0.141/magazine.c
+===================================================================
+--- tvonscreen-1.0.141/magazine.c
++++ tvonscreen-1.0.141/magazine.c	2008-04-25 12:12:16.000000000 +0300
+@@ -733,21 +733,21 @@
+ 	int width=184;
+ 
+ 	char *helptext[]={
+-		"NORMAL MODE:",
+-		"arrows\n\tmove view",
+-		"back\n\tclose TV OnScreen",
+-		"red/blue\n\t-/+ one day",
+-		"green/yellow\n\tone page left/right",
+-		"7/9\n\tone page left/right",
+-		"8\n\tgoto current channel",
+-		"0\n\tgoto now",
+-		"4/5/6\n\tgoto configured time",
+-		"ok\n\tswitch to edit mode\n",
+-		"EDIT MODE:",
+-		"back\n\tback to normal mode",
+-		"arrows\n\tmove selected schedule",
+-		"record\n\tcreate timer",
+-		"ok\n\tshow details",
++		trNOOP("NORMAL MODE:"),
++		trNOOP("arrows\n\tmove view"),
++		trNOOP("back\n\tclose TV OnScreen"),
++		trNOOP("red/blue\n\t-/+ one day"),
++		trNOOP("green/yellow\n\tone page left/right"),
++		trNOOP("7/9\n\tone page left/right"),
++		trNOOP("8\n\tgoto current channel"),
++		trNOOP("0\n\tgoto now"),
++		trNOOP("4/5/6\n\tgoto configured time"),
++		trNOOP("ok\n\tswitch to edit mode\n"),
++		trNOOP("EDIT MODE:"),
++		trNOOP("back\n\tback to normal mode"),
++		trNOOP("arrows\n\tmove selected schedule"),
++		trNOOP("record\n\tcreate timer"),
++		trNOOP("ok\n\tshow details"),
+ 		"|\n(c) 2004 Jürgen Schmitz\n\thttp://www.js-home.org/vdr",
+ 		NULL
+ 	};
+Index: tvonscreen-1.0.141/tvonscreen.c
+===================================================================
+--- tvonscreen-1.0.141/tvonscreen.c
++++ tvonscreen-1.0.141/tvonscreen.c	2008-04-25 12:12:16.000000000 +0300
+@@ -10,11 +10,11 @@
+ #include <vdr/plugin.h>
+ #include "magazine.h"
+ #include "config.h"
+-#include "i18n.h"
++
+ 
+ static const char *VERSION        = "1.0.141";
+-static const char *DESCRIPTION    = "Shows the EPG info in form of a typical TV magazine";
+-static const char *MAINMENUENTRY  = "TV-OnScreen";
++static const char *DESCRIPTION    = trNOOP("Shows the EPG info in form of a typical TV magazine");
++static const char *MAINMENUENTRY  = trNOOP("TV-OnScreen");
+ 
+ class cPluginTvOnscreen : public cPlugin {
+ private:
+@@ -61,7 +61,7 @@
+ bool cPluginTvOnscreen::Initialize(void)
+ {
+   // Initialize any background activities the plugin shall perform.
+-	RegisterI18n(tvoPhrases);
++	
+   	return true;
+ }
+ 
+Index: tvonscreen-1.0.141/po/de_DE.po
+===================================================================
+--- tvonscreen-1.0.141/po/de_DE.po
++++ tvonscreen-1.0.141/po/de_DE.po	2008-04-25 12:12:16.000000000 +0300
+@@ -0,0 +1,215 @@
++# VDR tvonscreen plugin language source file.
++# Copyright (C) YEAR THE VDR-tvonscreen'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the VDR-tvonscreen package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR-tvonscreen\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-25 12:12+0300\n"
++"PO-Revision-Date: 2008-04-25 12:12+0300\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: config.c:135
++msgid "show channel logos"
++msgstr "zeige Kanal-Logos"
++
++#: config.c:137
++msgid "show channel names"
++msgstr "zeige Kanal-Namen"
++
++#: config.c:139
++msgid "show logos in black&white"
++msgstr "zeige Kanal-Logos in Schwarz/Weiß"
++
++#: config.c:141
++msgid "enable color problem work around"
++msgstr "Farbproblem Umgehung aktivieren"
++
++#: config.c:144
++msgid "use XL fonts"
++msgstr "benutze XL Schrift"
++
++#: config.c:146
++msgid "hide info line"
++msgstr "verstecke Info Zeile"
++
++#: config.c:149
++msgid "user point in time 1 (Key 4)"
++msgstr "Anwenderzeitpunkt 1 (Taste 4)"
++
++#: config.c:151
++msgid "user point in time 2 (Key 5)"
++msgstr "Anwenderzeitpunkt 2 (Taste 5)"
++
++#: config.c:153
++msgid "user point in time 3 (Key 6)"
++msgstr "Anwenderzeitpunkt 3 (Taste 6)"
++
++#: config.c:156
++msgid "jump to next day point if ago"
++msgstr "Gehe zum nächsten Tag wenn vorbei"
++
++#: config.c:159
++msgid "Show search item itself"
++msgstr "Zeige auch Suchbegriff"
++
++#: magazine.c:296
++msgid "Press 1 for help"
++msgstr "Für Hilfe die 1 drücken"
++
++#: magazine.c:325 magazine.c:332
++#, c-format
++msgid "%d-%m"
++msgstr "%d.%m."
++
++#: magazine.c:346
++msgid "o'clock"
++msgstr "Uhr"
++
++#: magazine.c:432
++msgid "Timer conflict!"
++msgstr "Timer Konflikt!"
++
++#: magazine.c:736
++msgid "NORMAL MODE:"
++msgstr "NORMALER MODUS:"
++
++#: magazine.c:737
++msgid ""
++"arrows\n"
++"\tmove view"
++msgstr "Pfeile\n\tAnsicht bewegen"
++
++#: magazine.c:738
++msgid ""
++"back\n"
++"\tclose TV OnScreen"
++msgstr "back\n\tschließe TV OnScreen"
++
++#: magazine.c:739
++msgid ""
++"red/blue\n"
++"\t-/+ one day"
++msgstr "rot/blau\n\t-/+ ein Tag"
++
++#: magazine.c:740
++msgid ""
++"green/yellow\n"
++"\tone page left/right"
++msgstr "grün/gelb\n\teine Seite links/rechts"
++
++#: magazine.c:741
++msgid ""
++"7/9\n"
++"\tone page left/right"
++msgstr "7/9\n\teine Seite links/rechts"
++
++#: magazine.c:742
++msgid ""
++"8\n"
++"\tgoto current channel"
++msgstr "8\n\tgehe zum aktuellen Kanal"
++
++#: magazine.c:743
++msgid ""
++"0\n"
++"\tgoto now"
++msgstr "0\n\tgehe zur aktuellen Zeit"
++
++#: magazine.c:744
++msgid ""
++"4/5/6\n"
++"\tgoto configured time"
++msgstr "4/5/6\n\tgehe zu eingestellten Zeitpunkten"
++
++#: magazine.c:745
++msgid ""
++"ok\n"
++"\tswitch to edit mode\n"
++msgstr "ok\n\taktiviere Editier-Modus\n"
++
++#: magazine.c:746
++msgid "EDIT MODE:"
++msgstr "EDITIER MODUS:"
++
++#: magazine.c:747
++msgid ""
++"back\n"
++"\tback to normal mode"
++msgstr "back\n\tzurück zum normalen Modus"
++
++#: magazine.c:748
++msgid ""
++"arrows\n"
++"\tmove selected schedule"
++msgstr "Pfeile\n\tSendung auswählen"
++
++#: magazine.c:749
++msgid ""
++"record\n"
++"\tcreate timer"
++msgstr "record\n\terzeuge Timer"
++
++#: magazine.c:750
++msgid ""
++"ok\n"
++"\tshow details"
++msgstr "ok\n\tzeige Sendungsdetails"
++
++#: magazine.c:959
++msgid "Added AutoTimer to vdradmin."
++msgstr "AutoTimer in vdradmin aufgenommen."
++
++#: magazine.c:963
++msgid "Startoption 'vdradminfile' not set!"
++msgstr "Startoption 'vdradminfile' nicht gesetzt!"
++
++#: search.c:34 timer.c:23
++msgid "Search"
++msgstr "Suchen"
++
++#: search.c:42 search.c:55 search.c:101 search.c:118
++msgid "Search for"
++msgstr "Suche nach"
++
++#: search.c:45 search.c:47 search.c:105 search.c:107 search.c:113
++msgid "Searching..."
++msgstr "Suchen..."
++
++#: search.c:60 search.c:65 search.c:123 search.c:128
++msgid "Back"
++msgstr "Zurück"
++
++#: search.c:60 search.c:123
++msgid "Details"
++msgstr "Details"
++
++#: search.c:60 search.c:123 timer.c:23
++msgid "Record"
++msgstr "Aufnehmen"
++
++#: search.c:60 search.c:65
++msgid "in all"
++msgstr "in allen"
++
++#: search.c:64 search.c:127
++msgid "Nothing found!"
++msgstr "Nichts gefunden!"
++
++#: timer.c:23
++msgid "AutoTimer"
++msgstr "AutoTimer"
++
++#: tvonscreen.c:16
++msgid "Shows the EPG info in form of a typical TV magazine"
++msgstr ""
++
++#: tvonscreen.c:17
++msgid "TV-OnScreen"
++msgstr "TV-OnScreen"
+Index: tvonscreen-1.0.141/po/fi_FI.po
+===================================================================
+--- tvonscreen-1.0.141/po/fi_FI.po
++++ tvonscreen-1.0.141/po/fi_FI.po	2008-04-25 12:12:53.000000000 +0300
+@@ -0,0 +1,215 @@
++# VDR tvonscreen plugin language source file.
++# Copyright (C) YEAR THE VDR-tvonscreen'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the VDR-tvonscreen package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++msgid ""
++msgstr ""
++"Project-Id-Version: VDR-tvonscreen\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-25 12:12+0300\n"
++"PO-Revision-Date: 2008-04-25 12:12+0300\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: <vdr@linuxtv.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=ISO-8859-15\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: config.c:135
++msgid "show channel logos"
++msgstr "Näytä kanavien logot"
++
++#: config.c:137
++msgid "show channel names"
++msgstr "Näytä kanavien nimet"
++
++#: config.c:139
++msgid "show logos in black&white"
++msgstr "Näytä logot mustavalkoisina"
++
++#: config.c:141
++msgid "enable color problem work around"
++msgstr "Saksalainen värikorjaus"
++
++#: config.c:144
++msgid "use XL fonts"
++msgstr "Käytä XL-kirjasinta"
++
++#: config.c:146
++msgid "hide info line"
++msgstr "Piilota inforivi"
++
++#: config.c:149
++msgid "user point in time 1 (Key 4)"
++msgstr "Ajankohta #1 (näppäin '4')"
++
++#: config.c:151
++msgid "user point in time 2 (Key 5)"
++msgstr "Ajankohta #2 (näppäin '5')"
++
++#: config.c:153
++msgid "user point in time 3 (Key 6)"
++msgstr "Ajankohta #3 (näppäin '6')"
++
++#: config.c:156
++msgid "jump to next day point if ago"
++msgstr "Siirry tarvittaessa seur. päivään"
++
++#: config.c:159
++msgid "Show search item itself"
++msgstr "Näytä hakuehto"
++
++#: magazine.c:296
++msgid "Press 1 for help"
++msgstr "Paina '1' nähdäksesi opasteen"
++
++#: magazine.c:325 magazine.c:332
++#, c-format
++msgid "%d-%m"
++msgstr "%d.%m."
++
++#: magazine.c:346
++msgid "o'clock"
++msgstr " "
++
++#: magazine.c:432
++msgid "Timer conflict!"
++msgstr " "
++
++#: magazine.c:736
++msgid "NORMAL MODE:"
++msgstr "NORMAALITILA:"
++
++#: magazine.c:737
++msgid ""
++"arrows\n"
++"\tmove view"
++msgstr "'Nuolinäppäimet'\n\tohjaa näkymää"
++
++#: magazine.c:738
++msgid ""
++"back\n"
++"\tclose TV OnScreen"
++msgstr "'Takaisin'\n\tsulje laajennos"
++
++#: magazine.c:739
++msgid ""
++"red/blue\n"
++"\t-/+ one day"
++msgstr "'Punainen'/'Sininen'\n\tyksi päivä eteen/taaksepäin"
++
++#: magazine.c:740
++msgid ""
++"green/yellow\n"
++"\tone page left/right"
++msgstr "'Vihreä'/'Keltainen'\n\tseuraava/edellinen sivu"
++
++#: magazine.c:741
++msgid ""
++"7/9\n"
++"\tone page left/right"
++msgstr "'7'/'9'\n\tseuraava/edellinen sivu"
++
++#: magazine.c:742
++msgid ""
++"8\n"
++"\tgoto current channel"
++msgstr "'8'\n\tsiirry nykyiselle kanavalle"
++
++#: magazine.c:743
++msgid ""
++"0\n"
++"\tgoto now"
++msgstr "'0'\n\tsiirry nykyhetkeen"
++
++#: magazine.c:744
++msgid ""
++"4/5/6\n"
++"\tgoto configured time"
++msgstr "'4'/'5'/'6'\n\tsiirry määriteltyyn ajankohtaan"
++
++#: magazine.c:745
++msgid ""
++"ok\n"
++"\tswitch to edit mode\n"
++msgstr "'OK'\n\tvaihda muokkaustilaan\n"
++
++#: magazine.c:746
++msgid "EDIT MODE:"
++msgstr "MUOKKAUSTILA:"
++
++#: magazine.c:747
++msgid ""
++"back\n"
++"\tback to normal mode"
++msgstr "'Takaisin'\n\tvaihda normaalitilaan"
++
++#: magazine.c:748
++msgid ""
++"arrows\n"
++"\tmove selected schedule"
++msgstr "'Nuolinäppäimet'\n\tvalitse ohjelma"
++
++#: magazine.c:749
++msgid ""
++"record\n"
++"\tcreate timer"
++msgstr "'Tallenna'\n\tluo ajastin"
++
++#: magazine.c:750
++msgid ""
++"ok\n"
++"\tshow details"
++msgstr "'OK'\n\tnäytä lisätiedot"
++
++#: magazine.c:959
++msgid "Added AutoTimer to vdradmin."
++msgstr "AutoTimer lisätty VDRAdminiin."
++
++#: magazine.c:963
++msgid "Startoption 'vdradminfile' not set!"
++msgstr "Käynnistysoptio 'vdradminfile' puuttuu!"
++
++#: search.c:34 timer.c:23
++msgid "Search"
++msgstr "Etsi"
++
++#: search.c:42 search.c:55 search.c:101 search.c:118
++msgid "Search for"
++msgstr "Etsitään termiä"
++
++#: search.c:45 search.c:47 search.c:105 search.c:107 search.c:113
++msgid "Searching..."
++msgstr "Etsitään..."
++
++#: search.c:60 search.c:65 search.c:123 search.c:128
++msgid "Back"
++msgstr "Takaisin"
++
++#: search.c:60 search.c:123
++msgid "Details"
++msgstr "Lisätiedot"
++
++#: search.c:60 search.c:123 timer.c:23
++msgid "Record"
++msgstr "Tallenna"
++
++#: search.c:60 search.c:65
++msgid "in all"
++msgstr "Etsi kaikki"
++
++#: search.c:64 search.c:127
++msgid "Nothing found!"
++msgstr ""
++
++#: timer.c:23
++msgid "AutoTimer"
++msgstr "AutoTimer"
++
++#: tvonscreen.c:16
++msgid "Shows the EPG info in form of a typical TV magazine"
++msgstr "TV-ohjelmatiedot (OSD)"
++
++#: tvonscreen.c:17
++msgid "TV-OnScreen"
++msgstr "TV-ohjelmat"
+Index: tvonscreen-1.0.141/po/tvonscreen.pot
+===================================================================
+--- tvonscreen-1.0.141/po/tvonscreen.pot
++++ tvonscreen-1.0.141/po/tvonscreen.pot	2008-04-25 12:12:16.000000000 +0300
+@@ -0,0 +1,216 @@
++# SOME DESCRIPTIVE TITLE.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
++# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
++#
++#, fuzzy
++msgid ""
++msgstr ""
++"Project-Id-Version: PACKAGE VERSION\n"
++"Report-Msgid-Bugs-To: http://qa.mandriva.com/\n"
++"POT-Creation-Date: 2008-04-25 12:12+0300\n"
++"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
++"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
++"Language-Team: LANGUAGE <LL@li.org>\n"
++"MIME-Version: 1.0\n"
++"Content-Type: text/plain; charset=CHARSET\n"
++"Content-Transfer-Encoding: 8bit\n"
++
++#: config.c:135
++msgid "show channel logos"
++msgstr ""
++
++#: config.c:137
++msgid "show channel names"
++msgstr ""
++
++#: config.c:139
++msgid "show logos in black&white"
++msgstr ""
++
++#: config.c:141
++msgid "enable color problem work around"
++msgstr ""
++
++#: config.c:144
++msgid "use XL fonts"
++msgstr ""
++
++#: config.c:146
++msgid "hide info line"
++msgstr ""
++
++#: config.c:149
++msgid "user point in time 1 (Key 4)"
++msgstr ""
++
++#: config.c:151
++msgid "user point in time 2 (Key 5)"
++msgstr ""
++
++#: config.c:153
++msgid "user point in time 3 (Key 6)"
++msgstr ""
++
++#: config.c:156
++msgid "jump to next day point if ago"
++msgstr ""
++
++#: config.c:159
++msgid "Show search item itself"
++msgstr ""
++
++#: magazine.c:296
++msgid "Press 1 for help"
++msgstr ""
++
++#: magazine.c:325 magazine.c:332
++#, c-format
++msgid "%d-%m"
++msgstr ""
++
++#: magazine.c:346
++msgid "o'clock"
++msgstr ""
++
++#: magazine.c:432
++msgid "Timer conflict!"
++msgstr ""
++
++#: magazine.c:736
++msgid "NORMAL MODE:"
++msgstr ""
++
++#: magazine.c:737
++msgid ""
++"arrows\n"
++"\tmove view"
++msgstr ""
++
++#: magazine.c:738
++msgid ""
++"back\n"
++"\tclose TV OnScreen"
++msgstr ""
++
++#: magazine.c:739
++msgid ""
++"red/blue\n"
++"\t-/+ one day"
++msgstr ""
++
++#: magazine.c:740
++msgid ""
++"green/yellow\n"
++"\tone page left/right"
++msgstr ""
++
++#: magazine.c:741
++msgid ""
++"7/9\n"
++"\tone page left/right"
++msgstr ""
++
++#: magazine.c:742
++msgid ""
++"8\n"
++"\tgoto current channel"
++msgstr ""
++
++#: magazine.c:743
++msgid ""
++"0\n"
++"\tgoto now"
++msgstr ""
++
++#: magazine.c:744
++msgid ""
++"4/5/6\n"
++"\tgoto configured time"
++msgstr ""
++
++#: magazine.c:745
++msgid ""
++"ok\n"
++"\tswitch to edit mode\n"
++msgstr ""
++
++#: magazine.c:746
++msgid "EDIT MODE:"
++msgstr ""
++
++#: magazine.c:747
++msgid ""
++"back\n"
++"\tback to normal mode"
++msgstr ""
++
++#: magazine.c:748
++msgid ""
++"arrows\n"
++"\tmove selected schedule"
++msgstr ""
++
++#: magazine.c:749
++msgid ""
++"record\n"
++"\tcreate timer"
++msgstr ""
++
++#: magazine.c:750
++msgid ""
++"ok\n"
++"\tshow details"
++msgstr ""
++
++#: magazine.c:959
++msgid "Added AutoTimer to vdradmin."
++msgstr ""
++
++#: magazine.c:963
++msgid "Startoption 'vdradminfile' not set!"
++msgstr ""
++
++#: search.c:34 timer.c:23
++msgid "Search"
++msgstr ""
++
++#: search.c:42 search.c:55 search.c:101 search.c:118
++msgid "Search for"
++msgstr ""
++
++#: search.c:45 search.c:47 search.c:105 search.c:107 search.c:113
++msgid "Searching..."
++msgstr ""
++
++#: search.c:60 search.c:65 search.c:123 search.c:128
++msgid "Back"
++msgstr ""
++
++#: search.c:60 search.c:123
++msgid "Details"
++msgstr ""
++
++#: search.c:60 search.c:123 timer.c:23
++msgid "Record"
++msgstr ""
++
++#: search.c:60 search.c:65
++msgid "in all"
++msgstr ""
++
++#: search.c:64 search.c:127
++msgid "Nothing found!"
++msgstr ""
++
++#: timer.c:23
++msgid "AutoTimer"
++msgstr ""
++
++#: tvonscreen.c:16
++msgid "Shows the EPG info in form of a typical TV magazine"
++msgstr ""
++
++#: tvonscreen.c:17
++msgid "TV-OnScreen"
++msgstr ""
