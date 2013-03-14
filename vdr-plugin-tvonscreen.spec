@@ -2,7 +2,7 @@
 %define plugin	tvonscreen
 %define name	vdr-plugin-%plugin
 %define version	1.0.141
-%define rel	12
+%define rel	13
 
 # backportability
 %define _localstatedir %{_var}
@@ -19,7 +19,6 @@ Source:		vdr-%plugin-%version.tar.bz2
 Patch0:		02_tvonscreen-1.0-fixes.dpatch
 Patch1:		90_tvonscreen-1.0.141-1.5.3.dpatch
 Patch2:		tvonscreen-1.0.141-i18n-1.6.patch
-BuildRoot:	%{_tmppath}/%{name}-buildroot
 BuildRequires:	vdr-devel >= 1.6.0
 Requires:	vdr-abi = %vdr_abi
 
@@ -52,17 +51,7 @@ default=%{_localstatedir}/lib/vdradmin/vdradmin.at
 %vdr_plugin_build
 
 %install
-rm -rf %{buildroot}
 %vdr_plugin_install
-
-%clean
-rm -rf %{buildroot}
-
-%post
-%vdr_plugin_post %plugin
-
-%postun
-%vdr_plugin_postun %plugin
 
 %files -f %plugin.vdr
 %defattr(-,root,root)
