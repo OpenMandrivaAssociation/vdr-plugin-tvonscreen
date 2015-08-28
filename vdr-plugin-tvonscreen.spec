@@ -6,7 +6,7 @@
 Summary:	VDR plugin: Shows the EPG info in form of a typical TV magazine
 Name:		vdr-plugin-%plugin
 Version:	1.0.141
-Release:	14
+Release:	15
 Group:		Video
 License:	GPL
 URL:		http://www.js-home.org/vdr/tvonscreen/
