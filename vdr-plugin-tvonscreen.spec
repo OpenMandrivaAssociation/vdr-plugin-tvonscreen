@@ -9,7 +9,7 @@ Version:	1.0.141
 Release:	15
 Group:		Video
 License:	GPL
-URL:		http://www.js-home.org/vdr/tvonscreen/
+URL:		https://www.js-home.org/vdr/tvonscreen/
 Source:		vdr-%plugin-%{version}.tar.bz2
 # dpatches from e-tobi repo
 Patch0:		02_tvonscreen-1.0-fixes.dpatch
